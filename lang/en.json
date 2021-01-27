@@ -1,0 +1,9 @@
+{
+    "SCENE_VIEWER.Loading.Title": "Loading",
+    "SCENE_VIEWER.Loading.Content": "Loading scene image",
+    "SCENE_VIEWER.Loading.Close": "Close",
+    "SCENE_VIEWER.Webm.Title": "Error",
+    "SCENE_VIEWER.Webm.Content": "Previewing of .webm background images is not supported",
+    "SCENE_VIEWER.Webm.Close": "Close"
+
+}
