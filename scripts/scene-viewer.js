@@ -1,3 +1,49 @@
+//initialisation
+Hooks.on("ready", () => {if (game.settings.get("scene-viewer","rightClick")) overrideRightClick()})
+//Setting up right click menu on compendium.  libWrapper override
+export function overrideRightClick(){
+    if(!game.modules.get('lib-wrapper')?.active && game.user.isGM){ //warn if libWrapper is not active
+        ui.notifications.error("Adding Compendium Scene Viewer to the right click context menu requires the 'libWrapper' module. Please install and activate it.");
+    }
+    libWrapper.register('scene-viewer', 'Compendium.prototype._contextMenu', function (html) {
+        let menuItems=[
+            {
+              name: "COMPENDIUM.ImportEntry",
+              icon: '<i class="fas fa-download"></i>',
+              callback: li => {
+                const entryId = li.attr('data-entry-id');
+                const entities = this.cls.collection;
+                return entities.importFromCollection(this.collection, entryId, {}, {renderSheet: true});
+              }
+            },
+            {
+              name: "COMPENDIUM.DeleteEntry",
+              icon: '<i class="fas fa-trash"></i>',
+              callback: li => {
+                let entryId = li.attr('data-entry-id');
+                this.getEntity(entryId).then(entry => {
+                  return Dialog.confirm({
+                    title: `${game.i18n.localize("COMPENDIUM.DeleteEntry")} ${entry.name}`,
+                    content: game.i18n.localize("COMPENDIUM.DeleteConfirm"),
+                    yes: () => this.deleteEntity(entryId),
+                  });
+                });
+              }
+            }]
+        if(html[0].children[1].children[0].className.includes("scene")) menuItems.push({
+            name: "SCENE-VIEWER.ViewScene",
+            icon: '<i class="fas fa-images"></i>',
+            callback: async (li) => {
+                const entryId = li.attr('data-entry-id');
+                const scene = await fromUuid(`Compendium.${this.collection}.${entryId}`);
+                const image = scene.data.img;
+                loadImage(image)
+            }
+          })
+        new ContextMenu(html, ".directory-item", menuItems);
+    }, 'OVERRIDE');
+}
+
 // Original hook by Zeel.  Additions by me to make sure it's a scene, and handle edge case.
 
 Hooks.on("renderCompendium", (compendium, html, data) => {
@@ -7,28 +53,28 @@ Hooks.on("renderCompendium", (compendium, html, data) => {
         const target = event.currentTarget;
         const scene = await fromUuid(`Compendium.${data.collection}.${target.dataset.entryId}`);
         const image = scene.data.img;
-        let dialogType= "Loading";
-        let loading = new Dialog({
-            title: game.i18n.localize(`SCENE_VIEWER.${dialogType}.Title`),
-            content: game.i18n.localize(`SCENE_VIEWER.${dialogType}.Content`),
-            buttons: {
-             one: {
-              icon: '<i class="fas fa-check"></i>',
-              label: game.i18n.localize(`SCENE_VIEWER.${dialogType}.Close`)
-             }
-            },
-            default: "one"
-           });
-        loading.render(true);
-        if (dialogType === "Loading"){
-            new MultiMediaPopout(image).render(true);
-            Hooks.once("renderImagePopout",()=>{
-                loading.close()
-            })
-        }
+        loadImage(image)
     });
 });
 
+function loadImage(image){
+    let loading = new Dialog({
+        title: game.i18n.localize(`SCENE_VIEWER.Loading.Title`),
+        content: game.i18n.localize(`SCENE_VIEWER.Loading.Content`),
+        buttons: {
+            one: {
+                icon: '<i class="fas fa-check"></i>',
+                label: game.i18n.localize(`SCENE_VIEWER.Loading.Close`)
+            }
+        },
+        default: "one"
+    });
+    loading.render(true);
+    new MultiMediaPopout(image).render(true);
+    Hooks.once("renderImagePopout",()=>{
+        loading.close()
+    })
+}
 //also todo - add an option into the context menu?
 //Stretch goals:  Settings to change modifier key (ctrl/shift/alt)
 
@@ -51,7 +97,7 @@ class MultiMediaPopout extends ImagePopout {
 		super(src, options);
 
 		this.video = ["mp4", "webm"].includes(
-			src.filename.split('.').pop().toLowerCase()
+			src.split('.').pop().toLowerCase()
 		);
 
 		this.options.template = "modules/scene-viewer/templates/media-popout.html"; //TODO: make the "muted" part of the template optional
