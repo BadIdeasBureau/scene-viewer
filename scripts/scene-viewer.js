@@ -31,7 +31,7 @@ export function overrideRightClick(){
               }
             }]
         if(html[0].children[1].children[0].className.includes("scene")) menuItems.push({
-            name: "SCENE-VIEWER.ViewScene",
+            name: "SCENE.View",
             icon: '<i class="fas fa-images"></i>',
             callback: async (li) => {
                 const entryId = li.attr('data-entry-id');
@@ -64,7 +64,7 @@ function loadImage(image){
         buttons: {
             one: {
                 icon: '<i class="fas fa-check"></i>',
-                label: game.i18n.localize(`SCENE_VIEWER.Loading.Close`)
+                label: game.i18n.localize("Close")
             }
         },
         default: "one"
