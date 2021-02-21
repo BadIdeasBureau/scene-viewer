@@ -53,11 +53,11 @@ Hooks.on("renderCompendium", (compendium, html, data) => {
         const target = event.currentTarget;
         const scene = await fromUuid(`Compendium.${data.collection}.${target.dataset.entryId}`);
         const image = scene.data.img;
-        loadImage(image)
+        loadImage(image, scene.name)
     });
 });
 
-function loadImage(image){
+function loadImage(image, title){
     let loading = new Dialog({
         title: game.i18n.localize(`SCENE_VIEWER.Loading.Title`),
         content: game.i18n.localize(`SCENE_VIEWER.Loading.Content`),
@@ -70,7 +70,7 @@ function loadImage(image){
         default: "one"
     });
     loading.render(true);
-    new MultiMediaPopout(image).render(true);
+    new MultiMediaPopout(image, {title: title}).render(true);
     Hooks.once("renderImagePopout",()=>{
         loading.close()
     })
@@ -96,7 +96,7 @@ class MultiMediaPopout extends ImagePopout {
 	constructor(src, options = {}) {
 		super(src, options);
 
-		this.video = ["mp4", "webm"].includes(
+		this.video = VIDEO_FILE_EXTENSIONS.includes(
 			src.split('.').pop().toLowerCase()
 		);
 
