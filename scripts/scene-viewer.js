@@ -30,7 +30,7 @@ export function overrideRightClick(){
                 });
               }
             }]
-        if(html[0].children[1].children[0].className.includes("scene")) menuItems.push({
+        if(html[0]?.children[1]?.children[0]?.className?.includes("scene")) menuItems.push({
             name: "SCENE.View",
             icon: '<i class="fas fa-images"></i>',
             callback: async (li) => {
