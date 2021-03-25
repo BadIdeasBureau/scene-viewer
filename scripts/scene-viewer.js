@@ -51,13 +51,15 @@ Hooks.on("renderCompendium", (compendium, html, data) => {
     html.find("[data-entry-id]").contextmenu(async (event) => {
         if (!event.ctrlKey) return;
         const target = event.currentTarget;
-        const scene = await fromUuid(`Compendium.${data.collection}.${target.dataset.entryId}`);
+        const uuid = `Compendium.${data.collection}.${target.dataset.entryId}`;
+        const scene = await fromUuid(uuid);
         const image = scene.data.img;
-        loadImage(image, scene.name)
+        const options = {title: scene.name, uuid};
+        loadImage(image, options)
     });
 });
 
-function loadImage(image, title){
+function loadImage(image, options){
     let loading = new Dialog({
         title: game.i18n.localize(`SCENE_VIEWER.Loading.Title`),
         content: game.i18n.localize(`SCENE_VIEWER.Loading.Content`),
@@ -70,12 +72,13 @@ function loadImage(image, title){
         default: "one"
     });
     loading.render(true);
-    new MultiMediaPopout(image, {title: title}).render(true);
+    if (game.settings.get("scene-viewer", "closePrevious")) Object.entries(ui.windows).forEach( async a => {if (a[1] instanceof MultiMediaPopout) await a[1].close() } );
+    new MultiMediaPopout(image, options).render(true);
     Hooks.once("renderImagePopout",()=>{
         loading.close()
     })
 }
-//also todo - add an option into the context menu?
+
 //Stretch goals:  Settings to change modifier key (ctrl/shift/alt)
 
 /**
