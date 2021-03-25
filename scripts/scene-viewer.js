@@ -88,7 +88,7 @@ function loadImage(image, options){
         default: "one"
     });
     loading.render(true);
-    if (game.settings.get("scene-viewer", "closePrevious")) Object.entries(ui.windows).forEach( async a => {if (a[1] instanceof MultiMediaPopout) await a[1].close() } );
+    if (game.settings.get("scene-viewer", "closePrevious")) Object.entries(ui.windows).forEach( async a => {if (a[1] instanceof MultiMediaPopout && a[1]?.options?.popOut) await a[1].close() } );
     new MultiMediaPopout(image, options).render(true);
     Hooks.once("renderImagePopout",()=>{
         loading.close()
