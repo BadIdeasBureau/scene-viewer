@@ -44,6 +44,22 @@ export function overrideRightClick(){
     }, 'OVERRIDE');
 }
 
+//Debugger support
+Hooks.once('devModeReady', ({ registerPackageDebugFlag }) => {
+    registerPackageDebugFlag('scene-viewer');
+});
+
+function log(...args) {
+    try {
+        const isDebugging = window.DEV?.getPackageDebugValue("scene-viewer");
+
+        if (isDebugging) {
+            console.log("scene-viewer", '|', ...args);
+        }
+    } catch (e) {}
+}
+//no logging actually implemented yet, but hey, it's a thing that might happen!
+
 // Original hook by Zeel.  Additions by me to make sure it's a scene, and handle edge case.
 
 Hooks.on("renderCompendium", (compendium, html, data) => {
