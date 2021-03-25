@@ -31,7 +31,7 @@ export function overrideRightClick(){
               }
             }]
         if(html[0]?.children[1]?.children[0]?.className?.includes("scene")) menuItems.push({
-            name: "SCENE.View",
+            name: game.i18n.localize("SCENES.View"),
             icon: '<i class="fas fa-images"></i>',
             callback: async (li) => {
                 const entryId = li.attr('data-entry-id');
