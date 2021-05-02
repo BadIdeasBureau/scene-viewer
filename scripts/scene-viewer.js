@@ -1,5 +1,6 @@
 //initialisation
-Hooks.on("ready", () => {if (game.settings.get("scene-viewer","rightClick")) overrideRightClick()})
+Hooks.once("init", () => game.socket.on("module.scene-viewer", (data) => MultiMediaPopout._handleShareMedia(data)))
+Hooks.once("ready", () => {if (game.settings.get("scene-viewer","rightClick")) overrideRightClick()})
 //Setting up right click menu on compendium.  libWrapper override
 export function overrideRightClick(){
     if(!game.modules.get('lib-wrapper')?.active && game.user.isGM){ //warn if libWrapper is not active
@@ -8,36 +9,37 @@ export function overrideRightClick(){
     libWrapper.register('scene-viewer', 'Compendium.prototype._contextMenu', function (html) {
         let menuItems=[
             {
-              name: "COMPENDIUM.ImportEntry",
-              icon: '<i class="fas fa-download"></i>',
-              callback: li => {
-                const entryId = li.attr('data-entry-id');
-                const entities = this.cls.collection;
-                return entities.importFromCollection(this.collection, entryId, {}, {renderSheet: true});
-              }
+                name: "COMPENDIUM.ImportEntry",
+                icon: '<i class="fas fa-download"></i>',
+                condition: () => this.collection.documentClass.canUserCreate(game.user),
+                callback: li => {
+                    const collection = game.collections.get(this.collection.documentName);
+                    const id = li.data("document-id");
+                    return collection.importFromCompendium(this.collection, id, {}, {renderSheet: true});
+                }
             },
             {
-              name: "COMPENDIUM.DeleteEntry",
-              icon: '<i class="fas fa-trash"></i>',
-              callback: li => {
-                let entryId = li.attr('data-entry-id');
-                this.getEntity(entryId).then(entry => {
-                  return Dialog.confirm({
-                    title: `${game.i18n.localize("COMPENDIUM.DeleteEntry")} ${entry.name}`,
-                    content: game.i18n.localize("COMPENDIUM.DeleteConfirm"),
-                    yes: () => this.deleteEntity(entryId),
-                  });
-                });
-              }
-            }]
-        if(html[0]?.children[1]?.children[0]?.className?.includes("scene")) menuItems.push({
+                name: "COMPENDIUM.DeleteEntry",
+                icon: '<i class="fas fa-trash"></i>',
+                condition: () => game.user.isGM,
+                callback: async li => {
+                    const id = li.data("document-id");
+                    const document = await this.collection.getDocument(id);
+                    return Dialog.confirm({
+                        title: `${game.i18n.localize("COMPENDIUM.DeleteEntry")} ${document.name}`,
+                        content: `<h4>${game.i18n.localize("AreYouSure")}</h4><p>${game.i18n.localize("COMPENDIUM.DeleteEntryWarning")}</p>`,
+                        yes: () => document.delete()
+                    });
+                }
+            }
+        ]
+        if(this.collection.documentName === "Scene") menuItems.push({
             name: game.i18n.localize("SCENES.View"),
             icon: '<i class="fas fa-images"></i>',
             callback: async (li) => {
                 const entryId = li.attr('data-entry-id');
-                const scene = await fromUuid(`Compendium.${this.collection}.${entryId}`);
-                const image = scene.data.img;
-                loadImage(image)
+                const scene = await this.collection.getDocument(entryId);
+                loadImage(scene)
             }
           })
         new ContextMenu(html, ".directory-item", menuItems);
@@ -60,22 +62,24 @@ function log(...args) {
 }
 //no logging actually implemented yet, but hey, it's a thing that might happen!
 
-// Original hook by Zeel.  Additions by me to make sure it's a scene, and handle edge case.
+// Original hook by Zeel.  Additions by me to make sure it's a scene, and handle edge case, and update to 0.8.
 
 Hooks.on("renderCompendium", (compendium, html, data) => {
-    if (compendium.entity !="Scene") return;
-    html.find("[data-entry-id]").contextmenu(async (event) => {
+    let {collection} = data;
+    log("Collection rendered:", collection)
+    if (collection.documentName !="Scene") return;
+    html.find("[data-document-id]").contextmenu(async (event) => {
         if (!event.ctrlKey) return;
         const target = event.currentTarget;
-        const uuid = `Compendium.${data.collection}.${target.dataset.entryId}`;
-        const scene = await fromUuid(uuid);
-        const image = scene.data.img;
-        const options = {title: scene.name, uuid};
-        loadImage(image, options)
+        const scene = await collection.getDocument(target.dataset.entryId);
+        loadImage(scene)
     });
 });
 
-function loadImage(image, options){
+function loadImage(scene){
+    log("Loading Scene:", scene)
+    const image = scene.img;
+    const options = {title: scene.name, uuid: scene.uuid}
     let loading = new Dialog({
         title: game.i18n.localize(`SCENE_VIEWER.Loading.Title`),
         content: game.i18n.localize(`SCENE_VIEWER.Loading.Content`),
@@ -115,7 +119,7 @@ class MultiMediaPopout extends ImagePopout {
 	constructor(src, options = {}) {
 		super(src, options);
 
-		this.video = VIDEO_FILE_EXTENSIONS.includes(
+		this.video = CONST.VIDEO_FILE_EXTENSIONS.includes(
 			src.split('.').pop().toLowerCase()
 		);
 
@@ -132,7 +136,7 @@ class MultiMediaPopout extends ImagePopout {
 	* Share the displayed image with other connected Users
 	*/
 	shareImage() {
-		game.socket.emit("module.token-hud-art-button", {
+		game.socket.emit("module.scene-viewer", {
 			image: this.object,
 			title: this.options.title,
 			uuid: this.options.uuid
@@ -147,7 +151,6 @@ class MultiMediaPopout extends ImagePopout {
 	 * @param {string} title - The title for the popout title bar.
 	 * @param {string} uuid
 	 * @return {MultiMediaPopout}
-	 * @private
 	 */
 	static _handleShareMedia({ image, title, uuid } = {}) {
 		return new MultiMediaPopout(image, {
