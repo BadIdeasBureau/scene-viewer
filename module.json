@@ -5,7 +5,7 @@
     "author": "BadIdeasBureau",
     "version": "auto-replaced",
     "minimumCoreVersion": "0.8.2",
-    "compatibleCoreVersion": "0.8.2",
+    "compatibleCoreVersion": "0.8.8",
     "esmodules":[
         "./scripts/scene-viewer.js",
         "./scripts/settings.js"

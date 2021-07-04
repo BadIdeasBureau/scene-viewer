@@ -37,9 +37,9 @@ export function overrideRightClick(){
             name: game.i18n.localize("SCENES.View"),
             icon: '<i class="fas fa-images"></i>',
             callback: async (li) => {
-                const entryId = li.attr('data-entry-id');
-                const scene = await this.collection.getDocument(entryId);
-                loadImage(scene)
+                const id = li.data("document-id");
+                const document = await this.collection.getDocument(id);
+                loadImage(document)
             }
           })
         new ContextMenu(html, ".directory-item", menuItems);
@@ -71,13 +71,17 @@ Hooks.on("renderCompendium", (compendium, html, data) => {
     html.find("[data-document-id]").contextmenu(async (event) => {
         if (!event.ctrlKey) return;
         const target = event.currentTarget;
-        const scene = await collection.getDocument(target.dataset.entryId);
+        const scene = await collection.getDocument(target.dataset.documentId);
         loadImage(scene)
     });
 });
 
 function loadImage(scene){
     log("Loading Scene:", scene)
+    if(!scene.img){
+        ui.notifications.warn(game.i18n.localize("SCENE_VIEWER.NoImage"))
+        return
+    }
     const image = scene.img;
     const options = {title: scene.name, uuid: scene.uuid}
     let loading = new Dialog({
@@ -101,6 +105,7 @@ function loadImage(scene){
 
 //Stretch goals:  Settings to change modifier key (ctrl/shift/alt)
 
+// noinspection JSClosureCompilerSyntax
 /**
  * Capable of handling images, as well as .mp4 and .webm video
  * not very sophisticated (according to Zeel). Original code by Zeel, used under MIT license
