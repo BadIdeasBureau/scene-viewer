@@ -124,9 +124,9 @@ class MultiMediaPopout extends ImagePopout {
 	constructor(src, options = {}) {
 		super(src, options);
 
-		this.video = CONST.VIDEO_FILE_EXTENSIONS.includes(
+		this.video = !!CONST.VIDEO_FILE_EXTENSIONS[
 			src.split('.').pop().toLowerCase()
-		);
+		];
 
 		this.options.template = "modules/scene-viewer/templates/media-popout.html"; //TODO: make the "muted" part of the template optional
 	}

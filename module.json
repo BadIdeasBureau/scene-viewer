@@ -4,8 +4,8 @@
     "description": "Allows scenes in a compendium to be viewed without importing",
     "author": "BadIdeasBureau",
     "version": "auto-replaced",
-    "minimumCoreVersion": "0.8.2",
-    "compatibleCoreVersion": "0.8.8",
+    "minimumCoreVersion": "9",
+    "compatibleCoreVersion": "9",
     "esmodules":[
         "./scripts/scene-viewer.js",
         "./scripts/settings.js"
