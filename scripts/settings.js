@@ -1,17 +1,5 @@
-import { overrideRightClick } from "./scene-viewer.js";
 
 Hooks.on("init",()=>{
-    game.settings.register("scene-viewer", "rightClick", {
-        name: game.i18n.localize("SCENE_VIEWER.Settings.RightClick"),
-        hint: game.i18n.localize("SCENE_VIEWER.Settings.Hints.RightClick"),
-        scope: "world",
-        config: true,
-        type: Boolean,
-        default: false,
-        onChange: value => { // A callback function which triggers when the setting is changed
-          if (value) overrideRightClick()
-        }
-      });
 
     game.settings.register("scene-viewer", "closePrevious", {
         name: game.i18n.localize("SCENE_VIEWER.Settings.ClosePrevious"),

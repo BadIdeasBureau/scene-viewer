@@ -2,8 +2,6 @@
     "SCENE_VIEWER.Loading.Title": "Loading",
     "SCENE_VIEWER.Loading.Content": "Loading scene image",
 
-    "SCENE_VIEWER.Settings.RightClick": "Context Menu Option",
-    "SCENE_VIEWER.Settings.Hints.RightClick": "Adds an option to preview the scene to the right click context menu.  Otherwise, the scene can be accessed by ctrl+right click.  REQUIRES LIBWRAPPER.  Will not work with anything else that changes the right click menu on any compendiums",
     "SCENE_VIEWER.Settings.ClosePrevious": "Close Other Popouts",
     "SCENE_VIEWER.Settings.Hints.ClosePrevious": "When previewing a scene, closes other popouts from this module.",
 

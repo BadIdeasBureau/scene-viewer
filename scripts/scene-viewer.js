@@ -1,50 +1,23 @@
 //initialisation
 Hooks.once("init", () => game.socket.on("module.scene-viewer", (data) => MultiMediaPopout._handleShareMedia(data)))
-Hooks.once("ready", () => {if (game.settings.get("scene-viewer","rightClick")) overrideRightClick()})
-//Setting up right click menu on compendium.  libWrapper override
-export function overrideRightClick(){
-    if(!game.modules.get('lib-wrapper')?.active && game.user.isGM){ //warn if libWrapper is not active
-        ui.notifications.error("Adding Compendium Scene Viewer to the right click context menu requires the 'libWrapper' module. Please install and activate it.");
-    }
-    libWrapper.register('scene-viewer', 'Compendium.prototype._contextMenu', function (html) {
-        let menuItems=[
-            {
-                name: "COMPENDIUM.ImportEntry",
-                icon: '<i class="fas fa-download"></i>',
-                condition: () => this.collection.documentClass.canUserCreate(game.user),
-                callback: li => {
-                    const collection = game.collections.get(this.collection.documentName);
-                    const id = li.data("document-id");
-                    return collection.importFromCompendium(this.collection, id, {}, {renderSheet: true});
-                }
-            },
-            {
-                name: "COMPENDIUM.DeleteEntry",
-                icon: '<i class="fas fa-trash"></i>',
-                condition: () => game.user.isGM,
-                callback: async li => {
-                    const id = li.data("document-id");
-                    const document = await this.collection.getDocument(id);
-                    return Dialog.confirm({
-                        title: `${game.i18n.localize("COMPENDIUM.DeleteEntry")} ${document.name}`,
-                        content: `<h4>${game.i18n.localize("AreYouSure")}</h4><p>${game.i18n.localize("COMPENDIUM.DeleteEntryWarning")}</p>`,
-                        yes: () => document.delete()
-                    });
-                }
-            }
-        ]
-        if(this.collection.documentName === "Scene") menuItems.push({
-            name: game.i18n.localize("SCENES.View"),
-            icon: '<i class="fas fa-images"></i>',
-            callback: async (li) => {
-                const id = li.data("document-id");
-                const document = await this.collection.getDocument(id);
-                loadImage(document)
-            }
-          })
-        new ContextMenu(html, ".directory-item", menuItems);
-    }, 'OVERRIDE');
-}
+
+//Setting up right click menu on compendium.
+
+Hooks.on("getCompendiumEntryContext", (html, entries) =>{
+    let pack = game.packs.get(html[0].dataset.pack)
+    entries.push({
+        name: game.i18n.localize("SCENES.View"),
+        icon: '<i class="fas fa-images"></i>',
+        condition: () => {
+            return pack.documentName === "Scene"
+        },
+        callback: async (li) => {
+            const id = li.data("document-id");
+            const document = await pack.getDocument(id);
+            loadImage(document)
+        }
+    })
+} )
 
 //Debugger support
 Hooks.once('devModeReady', ({ registerPackageDebugFlag }) => {
@@ -64,25 +37,15 @@ function log(...args) {
 
 // Original hook by Zeel.  Additions by me to make sure it's a scene, and handle edge case, and update to 0.8.
 
-Hooks.on("renderCompendium", (compendium, html, data) => {
-    let {collection} = data;
-    log("Collection rendered:", collection)
-    if (collection.documentName !="Scene") return;
-    html.find("[data-document-id]").contextmenu(async (event) => {
-        if (!event.ctrlKey) return;
-        const target = event.currentTarget;
-        const scene = await collection.getDocument(target.dataset.documentId);
-        loadImage(scene)
-    });
-});
 
 function loadImage(scene){
     log("Loading Scene:", scene)
-    if(!scene.img){
+    const image = scene.background.src;
+    if(!image){
         ui.notifications.warn(game.i18n.localize("SCENE_VIEWER.NoImage"))
         return
     }
-    const image = scene.img;
+    
     const options = {title: scene.name, uuid: scene.uuid}
     let loading = new Dialog({
         title: game.i18n.localize(`SCENE_VIEWER.Loading.Title`),
@@ -103,7 +66,6 @@ function loadImage(scene){
     })
 }
 
-//Stretch goals:  Settings to change modifier key (ctrl/shift/alt)
 
 // noinspection JSClosureCompilerSyntax
 /**
