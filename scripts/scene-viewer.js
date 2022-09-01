@@ -40,7 +40,7 @@ function log(...args) {
 
 function loadImage(scene){
     log("Loading Scene:", scene)
-    const image = scene.img;
+    const image = scene.background.src;
     if(!image){
         ui.notifications.warn(game.i18n.localize("SCENE_VIEWER.NoImage"))
         return
